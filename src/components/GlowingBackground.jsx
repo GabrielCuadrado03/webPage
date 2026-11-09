@@ -2,10 +2,16 @@ import React from 'react';
 
 export default function GlowingBackground() {
   return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-[-1] overflow-hidden bg-slate-950">
+    <div className="fixed inset-0 w-full h-full pointer-events-none z-[-1] overflow-hidden bg-[var(--color-bg-base,#050507)]">
       {/* Luces y degradados radiales dinámicos */}
-      <div className="absolute top-[20%] left-[-10%] w-[50vw] h-[50vw] bg-[#00d2ff]/3 rounded-full blur-[120px] animate-pulse pointer-events-none" />
-      <div className="absolute bottom-[20%] right-[-10%] w-[50vw] h-[50vw] bg-[#ff0055]/3 rounded-full blur-[120px] animate-pulse pointer-events-none" style={{ animationDuration: '8s' }} />
+      <div 
+        className="absolute top-[20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse pointer-events-none transition-colors duration-700" 
+        style={{ backgroundColor: 'var(--color-primary, #00d2ff)', opacity: 0.06 }}
+      />
+      <div 
+        className="absolute bottom-[20%] right-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px] animate-pulse pointer-events-none transition-colors duration-700" 
+        style={{ backgroundColor: 'var(--color-secondary, #ff0055)', opacity: 0.06, animationDuration: '8s' }} 
+      />
 
       {/* SVG de Topografía y Circuitos Fluorescentes */}
       <svg className="w-full h-full opacity-35" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
@@ -42,25 +48,22 @@ export default function GlowingBackground() {
           <path d="M-100,850 C400,1050 700,650 1100,950 C1500,1150 1700,800 2100,1050" />
         </g>
 
-        {/* Líneas fluorescentes cian (Circuitos) */}
-        <g stroke="#00d2ff" fill="none" opacity="0.3" filter="url(#neon-glow-cyan)">
-          {/* Línea Principal 1 */}
+        {/* Líneas fluorescentes Color Primario (Circuitos) */}
+        <g stroke="var(--color-primary, #00d2ff)" fill="none" opacity="0.4" filter="url(#neon-glow-cyan)">
           <path 
             d="M-50,180 C310,80 590,320 890,130 C1190,-70 1490,220 2050,80" 
             strokeWidth="1.2"
             strokeDasharray="8 8"
             className="animate-pulse"
           />
-          {/* Línea delgada satélite */}
           <path 
             d="M-50,185 C310,85 590,325 890,135 C1190,-65 1490,225 2050,85" 
             strokeWidth="0.4"
           />
         </g>
 
-        {/* Líneas fluorescentes rojo cereza (Circuitos) */}
-        <g stroke="#ff0055" fill="none" opacity="0.35" filter="url(#neon-glow-red)">
-          {/* Línea Principal 2 */}
+        {/* Líneas fluorescentes Color Secundario (Circuitos) */}
+        <g stroke="var(--color-secondary, #ff0055)" fill="none" opacity="0.4" filter="url(#neon-glow-red)">
           <path 
             d="M-50,520 C410,670 610,320 1060,570 C1460,770 1660,420 2050,670" 
             strokeWidth="1.2"
@@ -73,19 +76,19 @@ export default function GlowingBackground() {
         </g>
 
         {/* Nodos glowing circulantes en las intersecciones */}
-        <g opacity="0.6">
-          {/* Cian Nodes */}
-          <circle cx="450" cy="210" r="4" fill="#00d2ff" filter="url(#neon-glow-cyan)" className="animate-ping" style={{ animationDuration: '3s' }} />
-          <circle cx="450" cy="210" r="2.5" fill="#00d2ff" />
+        <g opacity="0.7">
+          {/* Nodos Primarios */}
+          <circle cx="450" cy="210" r="4" fill="var(--color-primary, #00d2ff)" filter="url(#neon-glow-cyan)" className="animate-ping" style={{ animationDuration: '3s' }} />
+          <circle cx="450" cy="210" r="2.5" fill="var(--color-primary, #00d2ff)" />
           
-          <circle cx="1320" cy="90" r="3" fill="#00d2ff" filter="url(#neon-glow-cyan)" />
+          <circle cx="1320" cy="90" r="3" fill="var(--color-primary, #00d2ff)" filter="url(#neon-glow-cyan)" />
           
-          {/* Red Nodes */}
-          <circle cx="850" cy="510" r="4" fill="#ff0055" filter="url(#neon-glow-red)" className="animate-ping" style={{ animationDuration: '4s' }} />
-          <circle cx="850" cy="510" r="2.5" fill="#ff0055" />
+          {/* Nodos Secundarios */}
+          <circle cx="850" cy="510" r="4" fill="var(--color-secondary, #ff0055)" filter="url(#neon-glow-red)" className="animate-ping" style={{ animationDuration: '4s' }} />
+          <circle cx="850" cy="510" r="2.5" fill="var(--color-secondary, #ff0055)" />
 
-          <circle cx="1600" cy="540" r="3" fill="#ff0055" filter="url(#neon-glow-red)" />
-          <circle cx="210" cy="550" r="2" fill="#ff0055" />
+          <circle cx="1600" cy="540" r="3" fill="var(--color-secondary, #ff0055)" filter="url(#neon-glow-red)" />
+          <circle cx="210" cy="550" r="2" fill="var(--color-secondary, #ff0055)" />
         </g>
       </svg>
     </div>

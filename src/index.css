@@ -2,9 +2,33 @@
 
 @import "tailwindcss";
 
+:root {
+  --color-primary: #00d2ff;
+  --color-primary-hover: #00b4db;
+  --color-secondary: #ff0055;
+  --color-secondary-hover: #e0004c;
+  --color-accent: #8b5cf6;
+  --color-bg-base: #050507;
+  --color-bg-surface: #0c0d12;
+  --color-bg-card: rgba(18, 20, 26, 0.70);
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-border: rgba(255, 255, 255, 0.08);
+}
+
 @theme {
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Space Grotesk', monospace;
+
+  /* Colores de Theming Dinámico */
+  --color-theme-primary: var(--color-primary);
+  --color-theme-secondary: var(--color-secondary);
+  --color-theme-accent: var(--color-accent);
+  --color-theme-base: var(--color-bg-base);
+  --color-theme-surface: var(--color-bg-surface);
+  --color-theme-card: var(--color-bg-card);
+  --color-theme-main: var(--color-text-main);
+  --color-theme-muted: var(--color-text-muted);
 
   /* Estilos de Fondo - Negro Profundo y Gris Oscuro Mate */
   --color-slate-950: #050507;
@@ -17,48 +41,48 @@
   --color-slate-500: #71717a;
   --color-slate-400: #a1a1aa;
   
-  /* Azul Neón Suave (Reemplazando Purple e Indigo) */
-  --color-purple-900: #082f49;
-  --color-purple-800: #0c4a6e;
-  --color-purple-700: #0369a1;
-  --color-purple-600: #0284c7;
-  --color-purple-500: #0ea5e9;
-  --color-purple-400: #00d2ff;
-  --color-purple-350: #38bdf8;
-  --color-purple-300: #7dd3fc;
-  --color-purple-200: #bae6fd;
-  --color-purple-100: #e0f2fe;
+  /* Azul Neón / Color Primario Dinámico (Reemplazando Purple e Indigo) */
+  --color-purple-900: var(--color-primary-hover);
+  --color-purple-800: var(--color-primary-hover);
+  --color-purple-700: var(--color-primary-hover);
+  --color-purple-600: var(--color-primary-hover);
+  --color-purple-500: var(--color-primary);
+  --color-purple-400: var(--color-primary);
+  --color-purple-350: var(--color-primary);
+  --color-purple-300: var(--color-primary);
+  --color-purple-200: var(--color-primary);
+  --color-purple-100: var(--color-primary);
 
-  --color-indigo-900: #082f49;
-  --color-indigo-800: #0c4a6e;
-  --color-indigo-700: #0369a1;
-  --color-indigo-600: #0284c7;
-  --color-indigo-500: #0ea5e9;
-  --color-indigo-400: #38bdf8;
-  --color-indigo-300: #7dd3fc;
+  --color-indigo-900: var(--color-primary-hover);
+  --color-indigo-800: var(--color-primary-hover);
+  --color-indigo-700: var(--color-primary-hover);
+  --color-indigo-600: var(--color-primary-hover);
+  --color-indigo-500: var(--color-primary);
+  --color-indigo-400: var(--color-primary);
+  --color-indigo-300: var(--color-primary);
 
-  /* Rojo Cereza de Acento (Reemplazando Emerald, Teal y Green) */
-  --color-emerald-950: #4c0519;
-  --color-emerald-900: #881337;
-  --color-emerald-800: #9f1239;
-  --color-emerald-750: #be123c;
-  --color-emerald-700: #be123c;
-  --color-emerald-600: #e11d48;
-  --color-emerald-500: #f43f5e;
-  --color-emerald-400: #fb7185;
-  --color-emerald-300: #fca5a5;
+  /* Color Secundario Dinámico (Reemplazando Emerald, Teal y Green) */
+  --color-emerald-950: var(--color-secondary-hover);
+  --color-emerald-900: var(--color-secondary-hover);
+  --color-emerald-800: var(--color-secondary-hover);
+  --color-emerald-750: var(--color-secondary-hover);
+  --color-emerald-700: var(--color-secondary-hover);
+  --color-emerald-600: var(--color-secondary-hover);
+  --color-emerald-500: var(--color-secondary);
+  --color-emerald-400: var(--color-secondary);
+  --color-emerald-300: var(--color-secondary);
 
-  --color-teal-900: #881337;
-  --color-teal-800: #9f1239;
-  --color-teal-700: #be123c;
-  --color-teal-600: #e11d48;
-  --color-teal-500: #f43f5e;
-  --color-teal-400: #fb7185;
+  --color-teal-900: var(--color-secondary-hover);
+  --color-teal-800: var(--color-secondary-hover);
+  --color-teal-700: var(--color-secondary-hover);
+  --color-teal-600: var(--color-secondary-hover);
+  --color-teal-500: var(--color-secondary);
+  --color-teal-400: var(--color-secondary);
 
-  --color-green-700: #be123c;
-  --color-green-600: #e11d48;
-  --color-green-500: #f43f5e;
-  --color-green-400: #fb7185;
+  --color-green-700: var(--color-secondary-hover);
+  --color-green-600: var(--color-secondary-hover);
+  --color-green-500: var(--color-secondary);
+  --color-green-400: var(--color-secondary);
   
   /* Textos Blancos Suaves */
   --color-white: #f8fafc;
@@ -72,8 +96,8 @@
    ========================================================================== */
 
 body, html, #root {
-  background: radial-gradient(circle at top, #0f1326 0%, #05060a 60%, #020203 100%) !important;
-  color: #f1f5f9 !important;
+  background: radial-gradient(circle at top, var(--color-bg-surface, #0c0d12) 0%, var(--color-bg-base, #050507) 60%, #000000 100%) !important;
+  color: var(--color-text-main, #f8fafc) !important;
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   scroll-behavior: smooth;
 }

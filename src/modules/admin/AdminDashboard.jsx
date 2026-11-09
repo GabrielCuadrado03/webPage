@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useConfig } from '../../context/ConfigContext';
 import { db, storage } from '../../config/firebase';
 import { 
   collection, 
@@ -57,7 +58,10 @@ import {
   Percent,
   CheckSquare,
   Square,
-  Search
+  Search,
+  Megaphone,
+  Save,
+  ArrowRight
 } from 'lucide-react';
 
 // Componente premium de Collage de Imágenes para Combos en el ERP
@@ -152,7 +156,42 @@ const ComboImageCollage = ({ productIds, products, defaultImageUrl, className = 
 
 export default function AdminDashboard() {
   const { currentUser, userProfile, logout } = useAuth();
+  const { config, updateConfig } = useConfig();
   const navigate = useNavigate();
+
+  // --- Estados y Control de Barra de Anuncios ---
+  const [announcementForm, setAnnouncementForm] = useState({
+    enabled: true,
+    text: '',
+    link: '',
+    linkText: '',
+    bgColor: '#ff0055',
+    textColor: '#ffffff'
+  });
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
+  const [announcementSavedSuccess, setAnnouncementSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (config?.announcementBar) {
+      setAnnouncementForm(config.announcementBar);
+    }
+  }, [config?.announcementBar]);
+
+  const handleSaveAnnouncement = async (e) => {
+    if (e) e.preventDefault();
+    setSavingAnnouncement(true);
+    setAnnouncementSavedSuccess(false);
+    try {
+      await updateConfig({ announcementBar: announcementForm });
+      setAnnouncementSavedSuccess(true);
+      setTimeout(() => setAnnouncementSavedSuccess(false), 3500);
+    } catch (err) {
+      console.error('Error al guardar la barra de anuncios:', err);
+      alert('Error al guardar la barra de anuncios.');
+    } finally {
+      setSavingAnnouncement(false);
+    }
+  };
 
   // --- Estados de Navegación Interna ERP ---
   const [activeSection, setActiveSection] = useState('dashboard'); // 'dashboard', 'orders', 'products', 'combos', 'banners', 'categories'
@@ -1667,7 +1706,7 @@ export default function AdminDashboard() {
               { id: 'inventory', name: 'Inventario', icon: Database, count: products.filter(p => (p.stock || 0) < 5).length, activeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
               { id: 'products', name: 'Productos', icon: Package, count: 0, activeColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
               { id: 'combos', name: 'Combos Promos', icon: Layers, count: combos.filter(c => getComboAvailabilityStatus(c).isOutOfStock).length, activeColor: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
-              { id: 'banners', name: 'Campañas Hero', icon: Image, count: 0, activeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+              { id: 'banners', name: 'Campañas & Avisos', icon: Megaphone, count: 0, activeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
               { id: 'categories', name: 'Categorías', icon: Tag, count: 0, activeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' }
             ].map(sec => (
               <button
@@ -2897,10 +2936,171 @@ export default function AdminDashboard() {
         )}
 
         {/* ==============================================================================================================
-            D. SECCIÓN: GESTIÓN DE BANNERS DE CAMPAÑAS
+            D. SECCIÓN: GESTIÓN DE BANNERS DE CAMPAÑAS Y BARRA DE ANUNCIOS
             ============================================================================================================== */}
         {activeSection === 'banners' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-8 animate-fadeIn">
+            
+            {/* 📢 1. CARD: BARRA SUPERIOR DE ANUNCIOS (ANNOUNCEMENT BAR) */}
+            <div className="bg-[#0f1424]/60 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-850 pb-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-[#ff0055]/10 text-[#ff0055]">
+                      <Megaphone className="h-4 w-4" />
+                    </span>
+                    <h3 className="font-extrabold text-white text-base">Barra de Anuncios Superior (Announcement Bar)</h3>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Aparece fija arriba de la barra de navegación para promocionar envíos gratis, códigos o avisos de temporada.
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleSaveAnnouncement}
+                  disabled={savingAnnouncement}
+                  variant="primary" 
+                  size="sm"
+                  className="bg-[#00d2ff] hover:bg-[#00b4db] text-slate-950 font-black shadow-md flex items-center space-x-2 border-0 cursor-pointer"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{savingAnnouncement ? 'Guardando...' : 'Guardar Barra'}</span>
+                </Button>
+              </div>
+
+              {/* Alerta de guardado exitoso */}
+              {announcementSavedSuccess && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
+                  <Check className="h-4 w-4 shrink-0" />
+                  <span className="font-bold">¡Barra de anuncios guardada y actualizada en vivo con éxito!</span>
+                </div>
+              )}
+
+              {/* Vista Previa en Vivo de la Barra */}
+              {announcementForm.enabled && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                    Vista Previa en Vivo:
+                  </span>
+                  <div 
+                    style={{ backgroundColor: announcementForm.bgColor || '#ff0055', color: announcementForm.textColor || '#ffffff' }}
+                    className="py-2 px-4 rounded-xl text-xs font-semibold flex items-center justify-between gap-3 shadow-md transition-all"
+                  >
+                    <div className="flex-1 flex flex-wrap items-center justify-center gap-2 text-center">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>{announcementForm.text || '🔥 Texto del anuncio...'}</span>
+                      {announcementForm.linkText && (
+                        <span className="underline font-bold inline-flex items-center gap-1">
+                          {announcementForm.linkText} <ArrowRight className="h-3 w-3" />
+                        </span>
+                      )}
+                    </div>
+                    <X className="h-3.5 w-3.5 opacity-70" />
+                  </div>
+                </div>
+              )}
+
+              {/* Switch Activar/Desactivar */}
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-white">Habilitar Barra de Anuncios</p>
+                  <p className="text-[11px] text-slate-400">Mostrar la barra superior en toda la tienda</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={announcementForm.enabled ?? true}
+                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, enabled: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00d2ff]"></div>
+                </label>
+              </div>
+
+              {/* Formulario de Campos */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                    Texto del Mensaje (Soporta Emojis 🔥)
+                  </label>
+                  <input
+                    type="text"
+                    value={announcementForm.text || ''}
+                    onChange={(e) => setAnnouncementForm(prev => ({ ...prev, text: e.target.value }))}
+                    placeholder="🔥 Envíos express a todo el país | Compras mayores a $50 con envío gratis"
+                    className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                      Texto del Botón / Enlace
+                    </label>
+                    <input
+                      type="text"
+                      value={announcementForm.linkText || ''}
+                      onChange={(e) => setAnnouncementForm(prev => ({ ...prev, linkText: e.target.value }))}
+                      placeholder="Aprovechar Oferta"
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block mb-1">
+                      Ruta o Enlace de Destino
+                    </label>
+                    <input
+                      type="text"
+                      value={announcementForm.link || ''}
+                      onChange={(e) => setAnnouncementForm(prev => ({ ...prev, link: e.target.value }))}
+                      placeholder="/combos o /products"
+                      className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                    <span className="text-xs font-bold text-slate-300">Color de Fondo</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={announcementForm.bgColor || '#ff0055'}
+                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, bgColor: e.target.value }))}
+                        className="w-8 h-8 rounded-lg bg-transparent cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={announcementForm.bgColor || '#ff0055'}
+                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, bgColor: e.target.value }))}
+                        className="w-20 px-2 py-1 bg-slate-900 border border-slate-750 rounded text-xs font-mono text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                    <span className="text-xs font-bold text-slate-300">Color de Texto</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={announcementForm.textColor || '#ffffff'}
+                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, textColor: e.target.value }))}
+                        className="w-8 h-8 rounded-lg bg-transparent cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={announcementForm.textColor || '#ffffff'}
+                        onChange={(e) => setAnnouncementForm(prev => ({ ...prev, textColor: e.target.value }))}
+                        className="w-20 px-2 py-1 bg-slate-900 border border-slate-750 rounded text-xs font-mono text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 🖼️ 2. CARD: GESTIÓN DE HERO BANNERS ROTATORIOS */}
             <div className="bg-[#0f1424]/40 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-850 pb-4">
                 <div>

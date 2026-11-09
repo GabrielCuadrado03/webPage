@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Link, NavLink, useNavigate } from 'react-router-dom';
+import { ConfigProvider, useConfig } from './context/ConfigContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
 import AppRoutes from './routes/AppRoutes';
+import AnnouncementBar from './components/AnnouncementBar';
 import NotificationToast from './components/NotificationToast';
 import FloatingSidebar from './components/FloatingSidebar';
 import GlowingBackground from './components/GlowingBackground';
@@ -23,6 +25,7 @@ function NavigationBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { currentUser, userProfile, logout } = useAuth();
   const { cartItemCount } = useCart();
+  const { config } = useConfig();
 
   const handleLogout = async () => {
     try {
@@ -47,10 +50,10 @@ function NavigationBar() {
           {/* Logo */}
           <Link to="/" className="flex-shrink-0 flex items-center space-x-3 group">
             <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#00d2ff]/40 shadow-[0_0_12px_rgba(0,210,255,0.3)] bg-slate-950 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform duration-300">
-              <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <img src={config?.branding?.logoUrl || "/images/logo.png"} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-lg font-black tracking-widest bg-gradient-to-r from-white via-slate-100 to-slate-350 bg-clip-text text-transparent uppercase font-sans">
-              ETHEREAL VAPES
+              {config?.branding?.siteName || "ETHEREAL VAPES"}
             </span>
           </Link>
 
@@ -270,54 +273,76 @@ function NavigationBar() {
   );
 }
 
+function Footer() {
+  const { config } = useConfig();
+  const whatsappUrl = config?.contact?.whatsappNumber 
+    ? `https://wa.me/${config.contact.whatsappNumber.replace(/[^0-9]/g, '')}`
+    : '#';
+
+  return (
+    <footer className="border-t border-slate-800/80 bg-slate-950/60 py-12 text-slate-400 text-sm mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-6 h-6 rounded-full overflow-hidden border border-[#00d2ff]/40 shadow-[0_0_8px_rgba(0,210,255,0.2)] bg-slate-950 flex items-center justify-center p-0.5">
+            <img src={config?.branding?.logoUrl || "/images/logo.png"} alt="Mini Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-bold tracking-wider text-slate-200 text-xs">
+            {config?.branding?.siteName || "ETHEREAL VAPES WEB"}
+          </span>
+        </div>
+        <p>{config?.legal?.copyright || "© 2026 Ethereal Vapes. Todos los derechos reservados."}</p>
+        <div className="flex space-x-6">
+          <a href={config?.legal?.privacyUrl || "#"} className="hover:text-purple-400 transition-colors">Privacidad</a>
+          <a href={config?.legal?.termsUrl || "#"} className="hover:text-purple-400 transition-colors">Términos</a>
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contacto</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function MainLayout() {
+  return (
+    <div className="min-h-screen text-slate-100 font-sans selection:bg-rose-500/30 selection:text-rose-300 flex flex-col justify-between relative">
+      {/* Fondo de Topografía y Luces Neón */}
+      <GlowingBackground />
+
+      <div className="w-full">
+        {/* Barra Superior de Anuncios y Promociones */}
+        <AnnouncementBar />
+
+        {/* Barra de Navegación Reutilizable */}
+        <NavigationBar />
+
+        {/* Contenido Principal Administrado por el Enrutador */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <AppRoutes />
+        </main>
+      </div>
+
+      {/* Toasts de Notificación Globales */}
+      <NotificationToast />
+
+      {/* Barra Lateral Flotante de Categorías */}
+      <FloatingSidebar />
+
+      {/* Footer Cohesivo */}
+      <Footer />
+    </div>
+  );
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <Router>
-          <div className="min-h-screen text-slate-100 font-sans selection:bg-[#ff0055]/30 selection:text-[#ff0055]/100 flex flex-col justify-between relative">
-            
-            {/* Fondo de Topografía y Luces Neón */}
-            <GlowingBackground />
-
-            <div className="w-full">
-              {/* Barra de Navegación Reutilizable */}
-              <NavigationBar />
-
-              {/* Contenido Principal Administrado por el Enrutador */}
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <AppRoutes />
-              </main>
-            </div>
-
-            {/* Toasts de Notificación Globales */}
-            <NotificationToast />
-
-            {/* Barra Lateral Flotante de Categorías */}
-            <FloatingSidebar />
-
-            {/* Footer Cohesivo */}
-            <footer className="border-t border-slate-800/80 bg-slate-950/60 py-12 text-slate-400 text-sm mt-auto">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-6 h-6 rounded-full overflow-hidden border border-[#00d2ff]/40 shadow-[0_0_8px_rgba(0,210,255,0.2)] bg-slate-950 flex items-center justify-center p-0.5">
-                    <img src="/images/logo.png" alt="Mini Logo" className="w-full h-full object-contain" />
-                  </div>
-                  <span className="font-bold tracking-wider text-slate-200 text-xs">ETHEREAL VAPES WEB</span>
-                </div>
-                <p>&copy; 2026 Ethereal Vapes. Todos los derechos reservados. </p>
-                <div className="flex space-x-6">
-                  <a href="#" className="hover:text-purple-400 transition-colors">Privacidad</a>
-                  <a href="#" className="hover:text-purple-400 transition-colors">Términos</a>
-                  <a href="#" className="hover:text-purple-400 transition-colors">Contacto</a>
-                </div>
-              </div>
-            </footer>
-
-          </div>
-        </Router>
-      </CartProvider>
-    </AuthProvider>
+    <ConfigProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Router>
+            <MainLayout />
+          </Router>
+        </CartProvider>
+      </AuthProvider>
+    </ConfigProvider>
   );
 }
 

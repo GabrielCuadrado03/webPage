@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useConfig } from '../../context/ConfigContext';
 import { collection, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import Button from '../../components/Button';
@@ -117,6 +118,7 @@ const ComboImageCollage = ({ productIds, products, defaultImageUrl, className = 
 export default function Cart() {
   const navigate = useNavigate();
   const { currentUser, userProfile, addUserAddress } = useAuth();
+  const { config } = useConfig();
   const { 
     cartItems, 
     updateQuantity, 
@@ -354,35 +356,56 @@ export default function Cart() {
       alert('Se están exportando los datos de tu pedido para enviar a WhatsApp.');
     }
 
-    let message = `¡Hola *Ethereal Vapes*! 🌬️\nHe realizado un nuevo pedido en su sitio web.\n\n`;
-    message += `📝 *ID del Pedido:* #${formattedOrderId}\n`;
-    message += `👤 *Cliente:* ${customerName}\n`;
-    message += `📞 *WhatsApp:* ${customerPhone}\n`;
-    message += `📍 *Dirección de Envío:* ${customerAddress}\n`;
-    message += `💳 *Método de Pago:* ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Efectivo contra entrega'}\n\n`;
-    message += `🛒 *Detalle de la Compra:*\n`;
-    
-    // Leemos de lastOrderItems en lugar de cartItems (que ya fue vaciado)
+    const siteName = config?.branding?.siteName || 'Ethereal Vapes';
+
+    // Generar detalle de los productos comprados
+    let itemsDetail = '';
     lastOrderItems.forEach((item) => {
       const type = item.isCombo ? 'Combo' : 'Producto';
-      message += `- *${item.quantity}x* ${item.name} (${type}) — _$${(item.price * item.quantity).toFixed(2)}_\n`;
+      itemsDetail += `- *${item.quantity}x* ${item.name} (${type}) — _$${(item.price * item.quantity).toFixed(2)}_\n`;
     });
 
-    // Leemos de lastOrderTotal en lugar de cartTotal (que ya fue vaciado)
-    message += `\n💰 *Total a pagar:* *$${lastOrderTotal.toFixed(2)}*\n\n`;
-    
-    if (paymentMethod === 'transferencia') {
-      message += `Espero el comprobante de transferencia para confirmación.`;
+    let message = '';
+    if (config?.contact?.whatsappMessageTemplate) {
+      message = config.contact.whatsappMessageTemplate
+        .replace('{siteName}', siteName)
+        .replace('{orderId}', formattedOrderId)
+        .replace('{customerName}', customerName)
+        .replace('{customerPhone}', customerPhone)
+        .replace('{customerAddress}', customerAddress)
+        .replace('{total}', lastOrderTotal.toFixed(2));
+      
+      message += `\n\n🛒 *Detalle de la Compra:*\n${itemsDetail}`;
+      message += `\n💳 *Método de Pago:* ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Efectivo contra entrega'}\n`;
+      if (paymentMethod === 'transferencia') {
+        message += `\nAdjunto mi comprobante de transferencia bancaria para confirmación inmediata.`;
+      }
     } else {
-      message += `En un momento confirmamos los detalles de la entrega. ¡Gracias por tu compra!`;
+      message = `¡Hola *${siteName}*! 🌬️\nHe realizado un nuevo pedido en su sitio web.\n\n`;
+      message += `📝 *ID del Pedido:* #${formattedOrderId}\n`;
+      message += `👤 *Cliente:* ${customerName}\n`;
+      message += `📞 *WhatsApp:* ${customerPhone}\n`;
+      message += `📍 *Dirección de Envío:* ${customerAddress}\n`;
+      message += `💳 *Método de Pago:* ${paymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 'Efectivo contra entrega'}\n\n`;
+      message += `🛒 *Detalle de la Compra:*\n${itemsDetail}`;
+      message += `\n💰 *Total a pagar:* *$${lastOrderTotal.toFixed(2)}*\n\n`;
+      
+      if (paymentMethod === 'transferencia') {
+        message += `Espero el comprobante de transferencia para confirmación.`;
+      } else {
+        message += `En un momento confirmamos los detalles de la entrega. ¡Gracias por tu compra!`;
+      }
     }
 
     const encodedMessage = encodeURIComponent(message);
     
-    // Abrir WhatsApp API (Celular real de la empresa - Ecuador)
-    const whatsappUrl = `https://wa.me/593984951682?text=${encodedMessage}`; 
+    // Obtener número configurado o fallback defensivo
+    const rawPhone = config?.contact?.whatsappNumber || '593984951682';
+    const targetPhone = rawPhone.replace(/[^0-9]/g, '');
     
-    // Usamos redirección directa en lugar de window.open para prevenir bloqueos de popups en celulares
+    const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodedMessage}`; 
+    
+    // Redirección directa hacia la API de WhatsApp
     window.location.href = whatsappUrl;
   };
 
@@ -915,6 +938,25 @@ export default function Cart() {
                     />
                   </label>
                 </div>
+
+                {/* Datos Bancarios Informativos */}
+                {paymentMethod === 'transferencia' && config?.payment && (
+                  <div className="mt-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl space-y-1 text-2xs animate-fadeIn text-left">
+                    <p className="font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="h-3 w-3 text-purple-400" />
+                      <span>Datos para Transferir ({config.payment.bankName || 'Banco'})</span>
+                    </p>
+                    <div className="text-slate-300 font-mono space-y-0.5 pt-1">
+                      <p><span className="text-slate-400 font-sans">Cuenta:</span> {config.payment.accountNumber} ({config.payment.accountType})</p>
+                      <p><span className="text-slate-400 font-sans">Titular:</span> {config.payment.accountOwner} — CI/RUC: {config.payment.idDocument}</p>
+                    </div>
+                    {config.payment.instructions && (
+                      <p className="text-[10px] text-slate-400 pt-1 font-sans italic leading-tight">
+                        {config.payment.instructions}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Resumen de Totales */}

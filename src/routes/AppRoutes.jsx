@@ -13,6 +13,8 @@ import Combos from '../modules/combos/Combos';
 import Cart from '../modules/cart/Cart';
 import Profile from '../modules/auth/Profile';
 import AdminDashboard from '../modules/admin/AdminDashboard';
+import MasterDashboard from '../modules/master/MasterDashboard';
+import { useConfig } from '../context/ConfigContext';
 import { getPlaceholderImage } from '../utils/placeholders';
 import { 
   ShoppingCart,
@@ -126,6 +128,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { currentUser, userProfile, toggleFavorite } = useAuth();
+  const { config } = useConfig();
 
   // Productos destacados dinámicos desde Firestore o mocks
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -350,18 +353,18 @@ const Home = () => {
           
           {/* Logo Circular Grande */}
           <div className="relative w-40 h-40 rounded-full overflow-hidden border border-[#00d2ff]/40 shadow-[0_0_25px_rgba(0,210,255,0.35)] bg-[#05060b] flex items-center justify-center p-1 group-hover:scale-103 transition-transform duration-500">
-            <img src="/images/logo.png" alt="Ethereal Vapes Logo" className="w-full h-full object-contain" />
+            <img src={config?.branding?.logoUrl || "/images/logo.png"} alt="Logo" className="w-full h-full object-contain" />
           </div>
           
           {/* Texto de la Marca */}
           <h2 className="text-2xl font-black tracking-widest mt-8 bg-gradient-to-r from-white via-slate-100 to-slate-450 bg-clip-text text-transparent uppercase font-sans">
-            ETHEREAL
+            {config?.branding?.siteName ? config.branding.siteName.split(' ')[0] : 'ETHEREAL'}
           </h2>
           <span className="text-sm font-bold tracking-[0.25em] text-[#00d2ff] uppercase font-sans mt-1">
-            VAPES
+            {config?.branding?.siteName && config.branding.siteName.split(' ').length > 1 ? config.branding.siteName.split(' ').slice(1).join(' ') : 'VAPES'}
           </span>
           <p className="text-[9px] text-slate-500 font-extrabold uppercase tracking-[0.3em] mt-6 border-t border-slate-800/60 pt-4 w-full">
-            Premium Experience
+            {config?.branding?.slogan || 'Premium Experience'}
           </p>
         </div>
 
@@ -461,8 +464,12 @@ const Home = () => {
             <div className="flex items-center space-x-2">
               <span className="text-[#ff0055] text-xl">✨</span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[#ff0055]">Ahorro Asegurado</p>
-                <h2 className="text-3xl font-extrabold tracking-tight mt-1 text-white">Combos Especiales</h2>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#ff0055]">
+                  {config?.sections?.combosTag || 'Ahorro Asegurado'}
+                </p>
+                <h2 className="text-3xl font-extrabold tracking-tight mt-1 text-white">
+                  {config?.sections?.combosTitle || 'Combos Especiales'}
+                </h2>
               </div>
             </div>
             <Link to="/combos" className="text-sm font-bold text-[#ff0055] hover:text-[#ff0055]/80 transition-colors">
@@ -584,8 +591,12 @@ const Home = () => {
       <section className="space-y-8 text-left">
         <div className="flex justify-between items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-purple-400">Selección Especial</p>
-            <h2 className="text-3xl font-extrabold tracking-tight mt-1 text-white">Productos Destacados</h2>
+            <p className="text-xs font-bold uppercase tracking-wider text-purple-400">
+              {config?.sections?.productsTag || 'Selección Especial'}
+            </p>
+            <h2 className="text-3xl font-extrabold tracking-tight mt-1 text-white">
+              {config?.sections?.productsTitle || 'Productos Destacados'}
+            </h2>
           </div>
           <Link to="/products" className="text-sm font-bold text-purple-400 hover:text-purple-300 transition-colors">
             Ver catálogo completo &rarr;
@@ -1147,6 +1158,10 @@ export default function AppRoutes() {
           </PrivateAdminRoute>
         } 
       />
+
+      {/* 🛡️ Rutas Confidenciales Master Admin (Parametrización Global) */}
+      <Route path="/master-control-88" element={<MasterDashboard />} />
+      <Route path="/master-admin" element={<MasterDashboard />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
