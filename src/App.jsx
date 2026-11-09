@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Link, NavLink, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider, useCart } from './context/CartContext';
+import { ConfigProvider } from './context/ConfigContext';
+import AnnouncementBar from './components/AnnouncementBar';
 import AppRoutes from './routes/AppRoutes';
 import NotificationToast from './components/NotificationToast';
 import FloatingSidebar from './components/FloatingSidebar';
@@ -272,7 +274,8 @@ function NavigationBar() {
 
 function App() {
   return (
-    <AuthProvider>
+    <ConfigProvider>
+      <AuthProvider>
       <CartProvider>
         <Router>
           <div className="min-h-screen text-slate-100 font-sans selection:bg-[#ff0055]/30 selection:text-[#ff0055]/100 flex flex-col justify-between relative">
@@ -282,6 +285,9 @@ function App() {
 
             <div className="w-full">
               {/* Barra de Navegación Reutilizable */}
+              {/* Barra de Anuncios Superior */}
+              <AnnouncementBar />
+
               <NavigationBar />
 
               {/* Contenido Principal Administrado por el Enrutador */}
@@ -318,6 +324,7 @@ function App() {
         </Router>
       </CartProvider>
     </AuthProvider>
+    </ConfigProvider>
   );
 }
 

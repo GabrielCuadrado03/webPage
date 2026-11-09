@@ -10,6 +10,10 @@ node_modules/
 dist/
 dist-ssr/
 
+# Firebase
+.firebase/
+
+
 # Logs
 *.log
 npm-debug.log*
