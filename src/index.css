@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  /* Estilos de Fondo - Negro Profundo y Gris Oscuro Mate */
+  --color-slate-950: #050507;
+  --color-slate-900: #0c0d12;
+  --color-slate-850: #12131a;
+  --color-slate-800: #181922;
+  --color-slate-750: #1f212d;
+  --color-slate-700: #252836;
+  --color-slate-650: #2e3142;
+  --color-slate-500: #71717a;
+  --color-slate-400: #a1a1aa;
+  
+  /* Azul Neón Suave (Reemplazando Purple e Indigo) */
+  --color-purple-900: #082f49;
+  --color-purple-800: #0c4a6e;
+  --color-purple-700: #0369a1;
+  --color-purple-600: #0284c7;
+  --color-purple-500: #0ea5e9;
+  --color-purple-400: #00d2ff;
+  --color-purple-350: #38bdf8;
+  --color-purple-300: #7dd3fc;
+  --color-purple-200: #bae6fd;
+  --color-purple-100: #e0f2fe;
+
+  --color-indigo-900: #082f49;
+  --color-indigo-800: #0c4a6e;
+  --color-indigo-700: #0369a1;
+  --color-indigo-600: #0284c7;
+  --color-indigo-500: #0ea5e9;
+  --color-indigo-400: #38bdf8;
+  --color-indigo-300: #7dd3fc;
+
+  /* Rojo Cereza de Acento (Reemplazando Emerald, Teal y Green) */
+  --color-emerald-950: #4c0519;
+  --color-emerald-900: #881337;
+  --color-emerald-800: #9f1239;
+  --color-emerald-750: #be123c;
+  --color-emerald-700: #be123c;
+  --color-emerald-600: #e11d48;
+  --color-emerald-500: #f43f5e;
+  --color-emerald-400: #fb7185;
+  --color-emerald-300: #fca5a5;
+
+  --color-teal-900: #881337;
+  --color-teal-800: #9f1239;
+  --color-teal-700: #be123c;
+  --color-teal-600: #e11d48;
+  --color-teal-500: #f43f5e;
+  --color-teal-400: #fb7185;
+
+  --color-green-700: #be123c;
+  --color-green-600: #e11d48;
+  --color-green-500: #f43f5e;
+  --color-green-400: #fb7185;
+  
+  /* Textos Blancos Suaves */
+  --color-white: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+}
+
+/* ==========================================================================
+   RESURRECCIÓN ESTÉTICA: OVERRIDES DE CLASES GLOBALES
+   ========================================================================== */
+
+body, html, #root {
+  background: radial-gradient(circle at top, #0f1326 0%, #05060a 60%, #020203 100%) !important;
+  color: #f1f5f9 !important;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* Reemplazo de los fondos azulados oscuros hardcodeados por negro mate */
+[class*="bg-[#0b0f19]"] {
+  background-color: #050507 !important;
+}
+[class*="bg-[#0e1326]"] {
+  background-color: #0d0e12 !important;
+}
+
+/* ==========================================================================
+   ESTILOS PREMIUM GLASSMORPHISM Y DESTELLOS CYBER
+   ========================================================================== */
+
+/* Tarjetas translúcidas Premium */
+.glass-card {
+  background: rgba(18, 20, 26, 0.65) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7) !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(0, 210, 255, 0.35) !important;
+  box-shadow: 0 0 25px -5px rgba(0, 210, 255, 0.12), 0 20px 40px -15px rgba(0, 0, 0, 0.8) !important;
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* Elementos de entrada (inputs) con estilo Premium minimalista */
+input[type="text"], input[type="email"], input[type="tel"], input[type="password"], textarea {
+  background-color: rgba(5, 5, 7, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.3s ease !important;
+  font-family: 'Space Grotesk', monospace !important;
+  color: #f8fafc !important;
+}
+
+input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="password"]:focus, textarea:focus {
+  border-color: #00d2ff !important;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.15) !important;
+  background-color: rgba(5, 5, 7, 0.8) !important;
+}
+
+/* Botones Premium con Glow en Hover */
+button, .btn-premium {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Scrollbar futurista minimalista */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050507;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #181922;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00d2ff;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}
+
+/* Efectos de Iluminación y degradados cinematográficos */
+.glow-text-cyan {
+  text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+}
+
+.glow-text-cherry {
+  text-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+}
+
+/* Forzar fuentes monospace en ID de pedidos y valores numéricos */
+.font-mono {
+  font-family: 'Space Grotesk', monospace !important;
+}
+
+/* ==========================================================================
+   ANIMACIONES PREMIUM PARA ALERTAS/NOTIFICACIONES (TOASTS)
+   ========================================================================== */
+@keyframes slideInRight {
+  from {
+    transform: translateY(1rem) translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateY(0) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) translateX(120%);
+    opacity: 0;
+  }
+}
+
+.animate-toast-in {
+  animation: slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: slideOutRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
