@@ -7,6 +7,7 @@ import { db } from '../../config/firebase';
 import Button from '../../components/Button';
 import { getCurrentLocationAddress, searchAddresses } from '../../utils/locationHelper';
 import { getPlaceholderImage } from '../../utils/placeholders';
+import { getNotificationSettings, notifyNewOrder } from '../../services/orderNotifier';
 import { 
   ShoppingBag, 
   Trash2, 
@@ -328,6 +329,13 @@ export default function Cart() {
       }
 
       setCreatedOrderId(orderId);
+
+      // Disparar alerta push/webhook (Telegram / Discord) de forma asíncrona sin bloquear el checkout
+      if (!orderId.startsWith('bypass_')) {
+        getNotificationSettings()
+          .then((notifConfig) => notifyNewOrder(orderDoc, orderId, notifConfig))
+          .catch((err) => console.warn('Aviso webhook omitido:', err));
+      }
       
       // Conservar los detalles para la redirección a WhatsApp antes de vaciar la cesta
       setLastOrderItems([...cartItems]);

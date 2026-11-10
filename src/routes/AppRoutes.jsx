@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { db } from '../config/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import Button from '../components/Button';
-import Login from '../modules/auth/Login';
-import Register from '../modules/auth/Register';
-import ForgotPassword from '../modules/auth/ForgotPassword';
-import Products from '../modules/products/Products';
-import Combos from '../modules/combos/Combos';
-import Cart from '../modules/cart/Cart';
-import Profile from '../modules/auth/Profile';
-import AdminDashboard from '../modules/admin/AdminDashboard';
+const Login = lazy(() => import('../modules/auth/Login'));
+const Register = lazy(() => import('../modules/auth/Register'));
+const ForgotPassword = lazy(() => import('../modules/auth/ForgotPassword'));
+const Products = lazy(() => import('../modules/products/Products'));
+const Combos = lazy(() => import('../modules/combos/Combos'));
+const Cart = lazy(() => import('../modules/cart/Cart'));
+const Profile = lazy(() => import('../modules/auth/Profile'));
+const AdminDashboard = lazy(() => import('../modules/admin/AdminDashboard'));
+
+
+
+
+
+
+
 import { getPlaceholderImage } from '../utils/placeholders';
 import { 
   ShoppingCart,
@@ -1117,9 +1124,17 @@ const PrivateCustomerRoute = ({ children }) => {
   return children;
 };
 
+const RouteLoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center min-h-[45vh] space-y-3">
+    <div className="animate-spin rounded-full h-9 w-9 border-2 border-[#00d2ff] border-t-transparent" />
+    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Cargando módulo...</span>
+  </div>
+);
+
 export default function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/auth/login" element={<Login />} />
       <Route path="/auth/register" element={<Register />} />
@@ -1149,6 +1164,7 @@ export default function AppRoutes() {
       />
 
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
