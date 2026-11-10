@@ -1,0 +1,211 @@
+================================================================================
+CONTEXTO TÉCNICO Y GUÍA DE CONTINUIDAD — ETHEREAL VAPES WEB
+================================================================================
+Propósito de este documento:
+Proveer a cualquier asistente de IA o desarrollador todo el contexto arquitectónico,
+estado de ramas, reglas de negocio, integraciones activas y tareas pendientes para
+continuar el desarrollo de forma segura, escalable y sin romper producción.
+
+================================================================================
+1. RESUMEN DEL PROYECTO Y STACK TECNOLÓGICO
+================================================================================
+- Proyecto: Ethereal Vapes Web (Tienda E-commerce y ERP administrativo - Ecuador 🇪🇨)
+- Proyecto Firebase ID: ethereal-vapes
+- Repositorio GitHub: https://github.com/GabrielCuadrado03/webPage.git
+- Directorio raíz de la app web: WebPagine/
+- Stack Frontend:
+  * React 19 (react / react-dom ^19.0.0)
+  * React Router DOM v7 (^7.0.0)
+  * Vite 6 (^6.0.0) + @vitejs/plugin-react
+  * Tailwind CSS v4 (^4.0.0 + @tailwindcss/vite)
+  * Lucide React (^0.469.0) para iconografía
+- Backend / Cloud (Serverless Firebase v11):
+  * Firebase Authentication (Email/Password + perfil de usuario en Firestore)
+  * Cloud Firestore (Base de datos NoSQL en tiempo real + Transacciones ACID)
+  * Firebase Storage (Almacenamiento de imágenes del catálogo en carpeta catalog/)
+  * Firebase Hosting (Despliegue automatizado vía GitHub Actions en rama main)
+
+================================================================================
+2. ESTRATEGIA DE RAMAS GIT Y FLUJO DE TRABAJO (¡MUY IMPORTANTE!)
+================================================================================
+El repositorio maneja 3 ramas con responsabilidades muy claras:
+
+1) `main` (PRODUCCIÓN EN VIVO):
+   - Lo que está publicado en internet (Firebase Hosting: ethereal-vapes.web.app).
+   - Tiene despliegue automático (CI/CD) mediante `.github/workflows/firebase-hosting-merge.yml`.
+   - Contiene: La tienda estable con colores/estilos originales, Barra de Anuncios en vivo,
+     Code Splitting con React.lazy, Meta Tags OpenGraph, y el Panel Admin ERP modular
+     con Notificaciones Telegram/Discord.
+   - NO contiene el módulo confidencial Master Admin todavía.
+
+2) `develop` (DESARROLLO Y PRUEBAS CONTINUAS — RAMA ACTUAL DE TRABAJO):
+   - Creada desde `main` con todas las mejoras recientes + este archivo de contexto.
+   - Aquí se deben programar, probar e integrar nuevas funcionalidades antes de
+     hacer merge hacia `main`.
+
+3) `moduloadministradorglobal` (MÓDULO MASTER ADMIN AISLADO):
+   - Contiene el módulo confidencial de parametrización global completa:
+     * Rutas secretas: `/master-control-88` y `/master-admin`
+     * Archivo principal: `src/modules/master/MasterDashboard.jsx` + `README.md`
+     * Theming dinámico en tiempo real vía CSS Variables (`src/utils/themeHelper.js`)
+     * Passkey de acceso maestro (default: `master2026!`)
+     * Backup / Restore de configuración en JSON.
+   - NOTA IMPORTANTE DE MERGE: La rama `moduloadministradorglobal` fue creada ANTES
+     de la refactorización modular de `AdminDashboard.jsx`, `AppRoutes.jsx` (lazy)
+     y del servicio `orderNotifier.js` realizados en `main`/`develop`. Si en el futuro
+     se decide fusionar `moduloadministradorglobal` con `develop`/`main`, se deberá
+     resolver el merge cuidadosamente conservando la modularización de `AdminDashboard`
+     y `orderNotifier.js`, y sumando `src/modules/master/`, `themeHelper.js` y
+     las rutas del Master en `AppRoutes.jsx`.
+
+================================================================================
+3. ARQUITECTURA DE CARPETAS ACTUAL (`WebPagine/src/`)
+================================================================================
+src/
+├── config/
+│   └── firebase.js                  # Inicialización Firebase con env vars + fallback público
+├── context/
+│   ├── AuthContext.jsx              # Autenticación Firebase, listener perfil users/{uid}
+│   ├── CartContext.jsx              # Carrito persistente, toasts en vivo, stock guard
+│   └── ConfigContext.jsx            # Cache-first (localStorage) + listener Firestore settings/general
+├── services/
+│   └── orderNotifier.js             # Servicio de alertas Telegram Bot + Discord Webhook + Audio/Push
+├── components/
+│   ├── AnnouncementBar.jsx          # Barra superior de anuncios promocionales en vivo
+│   ├── Button.jsx                   # Botón reutilizable con variantes
+│   ├── FloatingSidebar.jsx          # Barra flotante de categorías
+│   ├── GlowingBackground.jsx        # Fondo topográfico neón
+│   └── NotificationToast.jsx        # Notificaciones flotantes globales de compra/carrito
+├── routes/
+│   └── AppRoutes.jsx                # Home + Rutas con Code Splitting (React.lazy + Suspense)
+├── modules/
+│   ├── auth/                        # Login.jsx, Register.jsx, ForgotPassword.jsx, Profile.jsx
+│   ├── products/                    # Products.jsx (catálogo, filtros, favoritos)
+│   ├── combos/                      # Combos.jsx (packs promocionales con validación de stock)
+│   ├── cart/                        # Cart.jsx (checkout, validación, Firestore + WhatsApp + Notifier)
+│   └── admin/
+│       ├── AdminDashboard.jsx       # Orquestador ERP (~560 líneas, listeners Firestore + modales)
+│       ├── utils/
+│       │   └── reportUtils.js       # Cálculos financieros, disponibilidad combos, XML -> PDF
+│       └── components/
+│           ├── DashboardTab.jsx     # KPIs diarios/semanales/mensuales, gráfico SVG, Top 5, PDF
+│           ├── OrdersTab.jsx        # Pedidos activos/historial, buscador, aprobar/entregar/cancelar
+│           ├── InventoryTab.jsx     # Control rápido de stock y bitácora inventory_logs
+│           ├── ProductsTab.jsx      # Tabla CRUD de productos
+│           ├── CombosTab.jsx        # Tarjetas de combos y alertas de stock por componente
+│           ├── ComboImageCollage.jsx# Collage de hasta 4 fotos para combos
+│           ├── BannersTab.jsx       # Control en vivo de Barra de Anuncios + Hero Banners
+│           ├── CategoriesTab.jsx    # Gestión CRUD de categorías
+│           ├── NotificationsTab.jsx # Configuración y prueba de Telegram, Discord y Push navegador
+│           └── AdminModals.jsx      # Los 5 modales CRUD + ImageField reutilizable
+└── utils/
+    ├── locationHelper.js            # Geolocalización y búsqueda de direcciones en checkout
+    └── placeholders.js              # SVG fallbacks locales para imágenes
+
+================================================================================
+4. BASE DE DATOS CLOUD FIRESTORE (COLECCIONES Y ESQUEMAS)
+================================================================================
+- `products`: { name, description, price, userDiscount, stock, imageUrl, categoryId, isFeatured, isAvailable }
+- `combos`: { name, description, specialPrice, imageUrl, isAvailable, productIds: string[] }
+- `categories`: docId = slug (ej. "pods"), { name, imageUrl }
+- `banners`: { title, subtitle, description, imageUrl, linkText, linkUrl }
+- `orders`: {
+    customerId, totalAmount, itemsCount, createdAt (serverTimestamp),
+    status ('pendiente' | 'confirmado' | 'entregado' | 'completado' | 'cancelado'),
+    paymentMethod ('transferencia' | 'efectivo'),
+    productsPurchased: string[],
+    items: [{ productId, name, price, quantity, isCombo, productIds }],
+    customerName, customerPhone, customerAddress,
+    acceptedBy?, processedAt?, deliveredAt?, cancelledAt?
+  }
+  * NOTA: Confirmar un pedido (`confirmOrder` en AdminDashboard) ejecuta un `runTransaction`
+    atómico que verifica stock de productos individuales y componentes de combos antes
+    de descontar e insertar registros en `inventory_logs`.
+- `inventory_logs`: { productId, productName, changeAmount, previousStock, newStock, adjustedBy, timestamp, reason }
+- `users`: { uid, name/displayName, email, phoneNumber, createdAt, isAdmin (boolean), favoriteProductIds, addresses }
+- `settings/general`: Documento singleton público para configuración en vivo (actualmente `announcementBar`).
+- `settings/notifications`: Documento separado exclusivamente para ajustes y credenciales de
+  alertas (`telegramEnabled`, `telegramBotToken`, `telegramChatId`, `discordEnabled`,
+  `discordWebhookUrl`, `browserPushEnabled`, `browserSoundEnabled`).
+  * Se separó intencionalmente de `settings/general` para que el Bot Token de Telegram
+    NO se guarde en `localStorage` ni se descargue en la página de inicio para todos los visitantes.
+
+================================================================================
+5. RENDIMIENTO Y CODE SPLITTING IMPLEMENTADO
+================================================================================
+- `AppRoutes.jsx` usa `React.lazy()` para `AdminDashboard`, `Profile`, `Cart`, `Combos`, `Products`,
+  `Login`, `Register` y `ForgotPassword`, envueltos en `<Suspense>`.
+- Como `AdminDashboard` está protegido por `<PrivateAdminRoute>`, los clientes comunes NUNCA
+  descargan el código JavaScript del ERP administrativo.
+- `vite.config.js` separa en `manualChunks` los paquetes `react-vendor` y `firebase-vendor`.
+- En compilación verificado: bundle inicial bajó de ~1,128 KB a ~288 KB (85 KB gzip).
+
+================================================================================
+6. SISTEMA DE NOTIFICACIONES PUSH / WEBHOOKS (`src/services/orderNotifier.js`)
+================================================================================
+- Al confirmar un pedido real en `Cart.jsx` (`handleCheckout`), se llama asíncronamente
+  (sin bloquear la UI) a `getNotificationSettings()` y `notifyNewOrder(orderDoc, orderId, cfg)`.
+- Canales soportados:
+  1. Telegram Bot API: Envía mensaje HTML con ID de pedido, nombre, enlace `https://wa.me/...`,
+     dirección, método de pago, lista de ítems y total. Listo para usar configurando Token
+     y Chat ID desde `/admin` -> pestaña "Notificaciones".
+  2. Discord Webhook: Preparado con payload Embed completo (`buildDiscordOrderPayload` +
+     `sendDiscordNotification`). Solo requiere pegar la URL del Webhook y activar el switch.
+  3. Navegador en vivo (cuando `/admin` está abierto): Sonido con Web Audio API
+     (`playOrderAlertSound`) + notificación nativa del navegador (`showBrowserPushNotification`).
+
+================================================================================
+7. TAREAS PENDIENTES Y PUNTOS CRÍTICOS PARA CONTINUAR DESARROLLANDO
+================================================================================
+Prioridad Alta / Crítica (Seguridad antes de escalar):
+[ ] 1. ELIMINAR BYPASS DE DESARROLLO (`1` / `1`) EN PRODUCCIÓN:
+       En `src/context/AuthContext.jsx` (líneas ~22-42 y ~117-138) existe un acceso
+       simulado de administrador si email === '1' && password === '1', guardado en
+       `localStorage.getItem('ethereal_vapes_bypass_admin')`.
+       Acción recomendada: Eliminarlo por completo o restringirlo estrictamente con
+       `if (import.meta.env.DEV && ...)`.
+
+[ ] 2. CREAR Y DESPLEGAR REGLAS DE SEGURIDAD FIRESTORE Y STORAGE (`firestore.rules` / `storage.rules`):
+       Actualmente no existen archivos `.rules` versionados en el proyecto.
+       - Firestore: Lectura pública para catálogo (`products`, `combos`, `categories`,
+         `banners`, `settings/general`). Escritura en catálogo y lectura/edición global
+         de órdenes restringida a `users/$(request.auth.uid).data.isAdmin == true`.
+       - Storage: Lectura pública en `catalog/`, escritura solo para administradores autenticados.
+
+[ ] 3. MIGRAR DISPARO DE TELEGRAM A CLOUD FUNCTIONS (Cuando el proyecto pase a Plan Blaze):
+       Actualmente, al estar en plan gratuito (Spark), `Cart.jsx` lee `settings/notifications`
+       y llama a la API de Telegram desde el navegador del cliente. Al pasar a Firebase Blaze,
+       mover `notifyNewOrder` a una Cloud Function `onDocumentCreated("orders/{orderId}")`
+       para proteger `settings/notifications` con lectura exclusiva de Admin / Backend.
+
+Prioridad Media (Funcionalidad y Experiencia):
+[ ] 4. DESHARDCODEAR WHATSAPP Y DATOS BANCARIOS EN `Cart.jsx`:
+       En `main`/`develop`, `Cart.jsx` aún tiene el teléfono `593984951682` y datos del
+       Banco Pichincha fijos en el código. Conectarlos a `ConfigContext` (`settings/general`)
+       como ya está hecho en la rama `moduloadministradorglobal` (o añadir esos campos en el
+       Admin normal).
+
+[ ] 5. SINCRONIZAR RAMA `moduloadministradorglobal` CON LOS CAMBIOS DE `develop`:
+       Decidir si se unifica la modularización de `AdminDashboard` y `orderNotifier` hacia
+       `moduloadministradorglobal` para que el Master Admin y las mejoras convivan sin
+       conflictos futuros.
+
+[ ] 6. PASARELA DE PAGOS Y FILTROS DE CATÁLOGO:
+       - Evaluar integración de Payphone o Kushki/Placetopay (Ecuador).
+       - Añadir filtros en `Products.jsx` por marca, nivel de nicotina, puffs y rango de precio.
+       - Configurar PWA (`manifest.json` + service worker) para instalación en móviles.
+
+================================================================================
+8. COMANDOS ÚTILES (ENTORNO WINDOWS POWERSHELL)
+================================================================================
+IMPORTANTE: En Windows PowerShell 5.1 usar `;` como separador, NO `&&`.
+
+- Instalar dependencias:        npm install
+- Iniciar servidor local:       npm run dev
+- Compilar para producción:     npm run build
+- Desplegar manual a Firebase:  npm run build; firebase deploy --only hosting
+- Ver ramas y estado Git:       git branch -vv; git status
+
+================================================================================
+Fin del documento de contexto. Actualizado: 2026-11-10.
+================================================================================
