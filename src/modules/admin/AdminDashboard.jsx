@@ -15,7 +15,8 @@ import {
   query,
   orderBy
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { compressImage, getCompressionSummary } from '../../services/imageCompressor';
 import Button from '../../components/Button';
 import { getPlaceholderImage } from '../../utils/placeholders';
 import { getComboAvailabilityStatus } from './utils/reportUtils';
@@ -392,23 +393,49 @@ export default function AdminDashboard() {
   }, []);
 
   // ========================================================
-  // SUBIDA DE IMÁGENES Y TRANSACCIONES DE STOCK / PEDIDOS
+  // SUBIDA DE IMÁGENES CON COMPRESIÓN AUTOMÁTICA A WebP
   // ========================================================
-  const handleImageUpload = async (e, setImageUrlCallback) => {
+  const handleImageUpload = async (e, setImageUrlCallback, setPreviousUrlForCleanup) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setErrorMsg(null);
     setUploadingImage(true);
     try {
-      const fileRef = ref(storage, `catalog/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
+      const originalSize = file.size;
+
+      // 1. Comprimir automáticamente en el navegador antes de subir
+      const compressed = await compressImage(file, {
+        maxWidthPx: 1200,
+        quality: 0.82,
+        outputFormat: 'image/webp',
+      });
+
+      const summary = getCompressionSummary(originalSize, compressed.size);
+
+      // 2. Generar nombre limpio y único en Storage: catalog/timestamp_nombre.webp
+      const cleanName = compressed.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileRef = ref(storage, `catalog/${Date.now()}_${cleanName}`);
+
+      // 3. Subir el archivo comprimido
+      await uploadBytes(fileRef, compressed);
       const downloadUrl = await getDownloadURL(fileRef);
       setImageUrlCallback(downloadUrl);
-      setSuccessMsg('¡Archivo subido exitosamente a Firebase Storage!');
+
+      // 4. Si había una foto anterior de Storage, eliminarla para no dejar basura
+      if (typeof setPreviousUrlForCleanup === 'string' && setPreviousUrlForCleanup.includes('firebasestorage')) {
+        try {
+          const oldRef = ref(storage, setPreviousUrlForCleanup);
+          await deleteObject(oldRef);
+        } catch (_) {
+          // No crítico si la foto anterior ya no existe
+        }
+      }
+
+      setSuccessMsg(`✅ Foto subida y optimizada: ${summary}`);
     } catch (err) {
       console.error('Storage upload error:', err);
-      setErrorMsg('No se pudo subir la foto a Firebase Storage. Verifica las reglas de Storage o pega directamente una URL de red.');
+      setErrorMsg('No se pudo subir la foto. Verifica las Reglas de Firebase Storage o intenta con otra imagen.');
     } finally {
       setUploadingImage(false);
     }

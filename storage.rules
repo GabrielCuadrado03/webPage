@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Fotos del catálogo (productos, combos, banners) ───────────────────────
+    // Lectura pública: cualquier visitante puede ver las fotos de los productos
+    // Escritura/Eliminación: solo usuarios autenticados (el admin de la tienda)
+    match /catalog/{allPaths=**} {
+      allow read: if true;
+      allow write, delete: if request.auth != null;
+    }
+
+    // ─── Comprobantes de pago subidos por clientes ─────────────────────────────
+    // Lectura: solo el dueño del comprobante o un admin autenticado
+    // Escritura: cualquier usuario autenticado (cliente registrado)
+    match /proofs/{userId}/{fileName} {
+      allow read: if request.auth != null &&
+                    (request.auth.uid == userId || request.auth.token.isAdmin == true);
+      allow write: if request.auth != null &&
+                     request.auth.uid == userId &&
+                     request.resource.size < 10 * 1024 * 1024 && // máx 10 MB por comprobante
+                     request.resource.contentType.matches('image/.*');
+    }
+
+    // ─── Bloquear cualquier otra ruta por defecto ──────────────────────────────
+    match /{everything=**} {
+      allow read, write: if false;
+    }
+  }
+}

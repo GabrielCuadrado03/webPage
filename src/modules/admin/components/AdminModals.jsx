@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import Button from '../../../components/Button';
 import {
   Package,
@@ -7,31 +7,126 @@ import {
   Tag,
   Database,
   Upload,
-  Link as LinkIcon,
   CheckSquare,
   Square,
-  X
+  X,
+  Trash2,
+  ImagePlus
 } from 'lucide-react';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ImageField: Zona de carga con Drag & Drop, preview inmediata y botón eliminar
+// ─────────────────────────────────────────────────────────────────────────────
 function ImageField({
   label,
   value,
   onChange,
   uploadingImage,
   onFileUpload,
-  accentClass = 'text-indigo-400 hover:text-indigo-300',
-  focusBorderClass = 'focus:border-indigo-500',
-  previewClass = 'w-12 h-12 rounded-lg',
-  placeholder = 'Pegar URL directa de la foto o subir archivo a Storage...'
+  accentClass = 'text-indigo-400',
+  borderDragClass = 'border-indigo-500/60',
+  previewClass = 'w-full h-40 rounded-xl',
 }) {
+  const inputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    // Simulamos el evento que espera onFileUpload
+    const syntheticEvent = { target: { files: [file] } };
+    onFileUpload(syntheticEvent, onChange);
+  }, [onFileUpload, onChange]);
+
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = () => setIsDragging(false);
+
+  const hasImage = value && value.trim().length > 0;
+
   return (
-    <div className="space-y-2 border-t border-slate-850 pt-3 font-sans">
-      <div className="flex justify-between items-center">
-        <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">{label}</label>
-        <label className={`text-[10px] font-bold transition-colors cursor-pointer flex items-center space-x-1 ${accentClass}`}>
-          <Upload className="h-3.5 w-3.5" />
-          <span>{uploadingImage ? 'Subiendo...' : 'Subir a Storage'}</span>
+    <div className="space-y-2.5 border-t border-slate-800/60 pt-3 font-sans">
+      <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+        {label}
+      </label>
+
+      {/* Zona Drag & Drop o vista previa si ya hay imagen */}
+      {hasImage ? (
+        <div className="relative group rounded-xl overflow-hidden border border-slate-800 bg-slate-950/40">
+          <img
+            src={value}
+            alt="Vista previa"
+            className={`${previewClass} object-cover w-full`}
+          />
+          {/* Overlay al pasar el mouse con botones de acción */}
+          <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+            {/* Cambiar foto */}
+            <label
+              className={`flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold cursor-pointer transition-colors ${accentClass}`}
+              title="Cambiar foto"
+            >
+              <ImagePlus className="h-4 w-4" />
+              <span>{uploadingImage ? 'Subiendo...' : 'Cambiar'}</span>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                disabled={uploadingImage}
+                className="hidden"
+                onChange={(e) => onFileUpload(e, onChange)}
+              />
+            </label>
+            {/* Quitar foto */}
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-900/60 hover:bg-red-800/80 rounded-lg text-xs font-bold text-red-300 transition-colors"
+              title="Quitar foto"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Quitar</span>
+            </button>
+          </div>
+          {/* Indicador de carga sobre la imagen */}
+          {uploadingImage && (
+            <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-2">
+              <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-indigo-300 font-semibold">Optimizando y subiendo...</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Zona de Drop cuando no hay imagen */
+        <label
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`flex flex-col items-center justify-center gap-3 w-full h-36 rounded-xl border-2 border-dashed transition-all cursor-pointer
+            ${isDragging
+              ? `${borderDragClass} bg-indigo-500/10 scale-[1.01]`
+              : 'border-slate-700 bg-slate-950/30 hover:border-slate-500 hover:bg-slate-950/50'
+            }
+            ${uploadingImage ? 'pointer-events-none opacity-60' : ''}
+          `}
+        >
+          {uploadingImage ? (
+            <>
+              <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-indigo-300 font-semibold">Optimizando y subiendo...</span>
+            </>
+          ) : (
+            <>
+              <Upload className={`h-7 w-7 ${accentClass} opacity-70`} />
+              <div className="text-center space-y-0.5">
+                <p className={`text-xs font-bold ${accentClass}`}>Arrastra la foto aquí</p>
+                <p className="text-[10px] text-slate-500">o haz clic para seleccionar desde tu galería</p>
+                <p className="text-[10px] text-slate-600">Se comprimirá automáticamente a WebP</p>
+              </div>
+            </>
+          )}
           <input
+            ref={inputRef}
             type="file"
             accept="image/*"
             disabled={uploadingImage}
@@ -39,27 +134,6 @@ function ImageField({
             onChange={(e) => onFileUpload(e, onChange)}
           />
         </label>
-      </div>
-
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-          <LinkIcon className="h-4 w-4" />
-        </div>
-        <input
-          type="text"
-          required
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`w-full pl-9 pr-4 py-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-250 placeholder-slate-650 focus:outline-none ${focusBorderClass} transition-all font-sans`}
-        />
-      </div>
-
-      {value.trim() && (
-        <div className="flex items-center space-x-3.5 bg-slate-950/30 border border-slate-850 p-2.5 rounded-xl">
-          <img src={value} alt="preview" className={`${previewClass} object-cover bg-slate-950`} />
-          <span className="text-[10px] text-slate-500 truncate max-w-[340px]">{value}</span>
-        </div>
       )}
     </div>
   );
@@ -353,8 +427,8 @@ export default function AdminModals({
                 onChange={(url) => setComboForm(c => ({ ...c, imageUrl: url }))}
                 uploadingImage={uploadingImage}
                 onFileUpload={handleImageUpload}
-                accentClass="text-violet-400 hover:text-violet-300"
-                focusBorderClass="focus:border-violet-500"
+                accentClass="text-violet-400"
+                borderDragClass="border-violet-500/60"
               />
 
               <div className="border-t border-slate-850 pt-3.5 font-sans">
@@ -452,9 +526,8 @@ export default function AdminModals({
                 onChange={(url) => setBannerForm(b => ({ ...b, imageUrl: url }))}
                 uploadingImage={uploadingImage}
                 onFileUpload={handleImageUpload}
-                accentClass="text-emerald-400 hover:text-emerald-300"
-                focusBorderClass="focus:border-emerald-500"
-                previewClass="w-16 h-10 rounded-lg"
+                accentClass="text-emerald-400"
+                borderDragClass="border-emerald-500/60"
               />
 
               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-850 flex-shrink-0">
