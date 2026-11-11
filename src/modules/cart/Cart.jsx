@@ -388,7 +388,7 @@ export default function Cart() {
     const encodedMessage = encodeURIComponent(message);
     
     // Abrir WhatsApp API (Celular real de la empresa - Ecuador)
-    const whatsappUrl = `https://wa.me/593984951682?text=${encodedMessage}`; 
+    const whatsappUrl = `https://wa.me/593968972088?text=${encodedMessage}`; 
     
     // Usamos redirección directa en lugar de window.open para prevenir bloqueos de popups en celulares
     window.location.href = whatsappUrl;
