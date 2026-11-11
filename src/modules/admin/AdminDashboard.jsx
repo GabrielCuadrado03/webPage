@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { compressImage, getCompressionSummary } from '../../services/imageCompressor';
+import { uploadToCloudinary } from '../../services/cloudinaryService';
 import Button from '../../components/Button';
 import { getPlaceholderImage } from '../../utils/placeholders';
 import { getComboAvailabilityStatus } from './utils/reportUtils';
@@ -393,7 +394,7 @@ export default function AdminDashboard() {
   }, []);
 
   // ========================================================
-  // SUBIDA DE IMÁGENES CON COMPRESIÓN AUTOMÁTICA A WebP
+  // SUBIDA DE IMÁGENES CON COMPRESIÓN AUTOMÁTICA A WebP (Cloudinary con Fallback a Storage)
   // ========================================================
   const handleImageUpload = async (e, setImageUrlCallback, setPreviousUrlForCleanup) => {
     const file = e.target.files?.[0];
@@ -402,40 +403,44 @@ export default function AdminDashboard() {
     setErrorMsg(null);
     setUploadingImage(true);
     try {
-      const originalSize = file.size;
+      // 1. Intentar subir primero a Cloudinary (gratis, sin tarjeta)
+      try {
+        const result = await uploadToCloudinary(file);
+        setImageUrlCallback(result.url);
+        setSuccessMsg(`✅ Foto subida y optimizada en Cloudinary: ${result.summary}`);
+        return;
+      } catch (cloudErr) {
+        // Si no está configurado Cloudinary aún o falla, intentar fallback a Firebase Storage
+        console.warn('Cloudinary no configurado o falló, intentando Storage:', cloudErr.message);
+      }
 
-      // 1. Comprimir automáticamente en el navegador antes de subir
+      // 2. Fallback a Firebase Storage si Cloudinary no tiene credenciales
+      const originalSize = file.size;
       const compressed = await compressImage(file, {
         maxWidthPx: 1200,
         quality: 0.82,
         outputFormat: 'image/webp',
       });
-
       const summary = getCompressionSummary(originalSize, compressed.size);
-
-      // 2. Generar nombre limpio y único en Storage: catalog/timestamp_nombre.webp
       const cleanName = compressed.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const fileRef = ref(storage, `catalog/${Date.now()}_${cleanName}`);
 
-      // 3. Subir el archivo comprimido
       await uploadBytes(fileRef, compressed);
       const downloadUrl = await getDownloadURL(fileRef);
       setImageUrlCallback(downloadUrl);
 
-      // 4. Si había una foto anterior de Storage, eliminarla para no dejar basura
+      // Si había foto vieja de Storage, limpiarla
       if (typeof setPreviousUrlForCleanup === 'string' && setPreviousUrlForCleanup.includes('firebasestorage')) {
         try {
           const oldRef = ref(storage, setPreviousUrlForCleanup);
           await deleteObject(oldRef);
-        } catch (_) {
-          // No crítico si la foto anterior ya no existe
-        }
+        } catch (_) {}
       }
 
       setSuccessMsg(`✅ Foto subida y optimizada: ${summary}`);
     } catch (err) {
-      console.error('Storage upload error:', err);
-      setErrorMsg('No se pudo subir la foto. Verifica las Reglas de Firebase Storage o intenta con otra imagen.');
+      console.error('Image upload error:', err);
+      setErrorMsg(err.message || 'No se pudo subir la foto. Configura Cloudinary o Firebase Storage.');
     } finally {
       setUploadingImage(false);
     }
