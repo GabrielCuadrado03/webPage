@@ -6,9 +6,9 @@
 
 import { compressImage, getCompressionSummary } from './imageCompressor';
 
-// Claves de entorno o valores por defecto configurables
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '';
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '';
+// Claves de entorno o valores por defecto oficiales de Cloudinary
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'xwbbvvz3';
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'WebVape';
 
 /**
  * Sube una imagen a Cloudinary aplicando previamente compresión WebP en el navegador.
@@ -40,7 +40,6 @@ export async function uploadToCloudinary(file, customConfig = {}) {
   const formData = new FormData();
   formData.append('file', compressed);
   formData.append('upload_preset', uploadPreset);
-  formData.append('folder', 'catalog');
 
   // 3. Petición POST a Cloudinary
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
