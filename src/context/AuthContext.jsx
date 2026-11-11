@@ -18,38 +18,9 @@ export function AuthProvider({ children }) {
 
   // Registro de observador de estado de autenticación y perfil de Firestore
   useEffect(() => {
-    // Si la sesión de bypass administrativo está activa en localStorage, forzamos el estado simulado
-    if (localStorage.getItem('ethereal_vapes_bypass_admin') === 'true') {
-      const mockUser = {
-        uid: 'admin_bypass_uid',
-        email: 'admin_bypass@etherealvapes.com',
-        isAnonymous: false,
-        emailVerified: true
-      };
-      const mockProfile = {
-        uid: 'admin_bypass_uid',
-        name: 'Administrador Bypass',
-        email: 'admin_bypass@etherealvapes.com',
-        isAdmin: true,
-        phoneNumber: '+57 300 000 0000',
-        favoriteProductIds: [],
-        addresses: []
-      };
-      setCurrentUser(mockUser);
-      setUserProfile(mockProfile);
-      setLoading(false);
-      return; // Omitir el listener de Firebase mientras estemos en modo bypass local
-    }
-
     let unsubscribeProfile = () => {};
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      // Re-verificación por seguridad
-      if (localStorage.getItem('ethereal_vapes_bypass_admin') === 'true') {
-        setLoading(false);
-        return;
-      }
-
       setCurrentUser(user);
       
       if (user) {
@@ -112,31 +83,8 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Función de inicio de sesión con soporte para bypass administrativo '1' / '1'
+  // Función de inicio de sesión oficial con Firebase Auth
   const login = async (email, password) => {
-    if (email.trim() === '1' && password.trim() === '1') {
-      const mockUser = {
-        uid: 'admin_bypass_uid',
-        email: 'admin_bypass@etherealvapes.com',
-        isAnonymous: false,
-        emailVerified: true
-      };
-      const mockProfile = {
-        uid: 'admin_bypass_uid',
-        name: 'Administrador Bypass',
-        email: 'admin_bypass@etherealvapes.com',
-        isAdmin: true,
-        phoneNumber: '+57 300 000 0000',
-        favoriteProductIds: [],
-        addresses: []
-      };
-
-      localStorage.setItem('ethereal_vapes_bypass_admin', 'true');
-      setCurrentUser(mockUser);
-      setUserProfile(mockProfile);
-      return { user: mockUser };
-    }
-
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
@@ -186,14 +134,9 @@ export function AuthProvider({ children }) {
     return credential;
   };
 
-  // Función de cierre de sesión con soporte para bypass
+  // Función de cierre de sesión oficial
   const logout = async () => {
     localStorage.removeItem('ethereal_vapes_bypass_admin');
-    if (currentUser?.uid === 'admin_bypass_uid') {
-      setCurrentUser(null);
-      setUserProfile(null);
-      return;
-    }
     return signOut(auth);
   };
 
