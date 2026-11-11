@@ -995,8 +995,7 @@ export default function AdminDashboard() {
     { id: 'products', name: 'Productos', icon: Package, count: 0, activeColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
     { id: 'combos', name: 'Combos Promos', icon: Layers, count: combos.filter((c) => getComboAvailabilityStatus(c, products).isOutOfStock).length, activeColor: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
     { id: 'banners', name: 'Campañas & Avisos', icon: Megaphone, count: 0, activeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-    { id: 'categories', name: 'Categorías', icon: Tag, count: 0, activeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-    { id: 'notifications', name: 'Notificaciones', icon: Bell, count: 0, activeColor: 'text-sky-400 bg-sky-500/10 border-sky-500/20' }
+    { id: 'categories', name: 'Categorías', icon: Tag, count: 0, activeColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' }
   ];
 
   return (
