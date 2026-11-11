@@ -30,9 +30,9 @@ export default function Login() {
 
   // Estados del Sistema OTP Administrativo
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpCode, setOtpCode] = useState(''); // El código ingresado por el usuario
-  const [generatedOtp, setGeneratedOtp] = useState(''); // El código simulado generado
+  const [otpCode, setOtpCode] = useState(''); // El código ingresado por el administrador
   const [adminEmail, setAdminEmail] = useState(''); // Correo de admin activo
+  const ADMIN_SECURITY_OTP = '202520'; // Código de seguridad exclusivo del Administrador
 
   // Manejo del Login de usuario
   const handleLogin = async (e) => {
@@ -81,10 +81,10 @@ export default function Login() {
                          userProfile.isAdmin === 1;
 
       if (isAdminVal) {
-        // Es administrador, interceptamos el login e iniciamos flujo OTP por seguridad
+        // Es administrador, interceptamos el login e iniciamos flujo OTP real por seguridad
         triggerAdminOtpFlow(userProfile.email || email.trim());
       } else {
-        // Es un cliente común, ingresa directo al home
+        // Es un cliente común, ingresa directo al home sin pedir OTP
         setSuccessMsg(`¡Bienvenido de vuelta, ${userProfile.name}!`);
         setTimeout(() => {
           navigate('/');
@@ -94,39 +94,11 @@ export default function Login() {
     }
   }, [userProfile]);
 
-  // Generador de OTP administrativo (igual a _verifyAdminOtp en Flutter)
+  // Activación del modal OTP exclusivo para el Administrador
   const triggerAdminOtpFlow = (targetEmail) => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
     setAdminEmail(targetEmail);
     setOtpCode('');
     setShowOtpModal(true);
-
-    // Mostrar el código en un banner de desarrollo
-    console.log('\n' +
-      '======================================================\n' +
-      '🛡️ [ADMIN OTP SYSTEM] CÓDIGO DE VERIFICACIÓN 🛡️\n' +
-      '======================================================\n' +
-      `Usuario: ${targetEmail}\n` +
-      `Código OTP: [  ${code}  ]\n` +
-      '======================================================\n'
-    );
-  };
-
-  // Re-envío del OTP simulado
-  const handleResendOtp = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setOtpCode('');
-    
-    console.log('\n' +
-      '======================================================\n' +
-      '🛡️ [ADMIN OTP SYSTEM] NUEVO CÓDIGO DE VERIFICACIÓN 🛡️\n' +
-      '======================================================\n' +
-      `Usuario: ${adminEmail}\n` +
-      `Código OTP: [  ${code}  ]\n` +
-      '======================================================\n'
-    );
   };
 
   // Verificación del OTP ingresado
@@ -134,14 +106,14 @@ export default function Login() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (otpCode === generatedOtp) {
+    if (otpCode.trim() === ADMIN_SECURITY_OTP) {
       setSuccessMsg('🛡️ Autenticación de Administrador exitosa.');
       setShowOtpModal(false);
       setTimeout(() => {
         navigate('/admin');
       }, 1500);
     } else {
-      // Código erróneo. Cerramos sesión inmediatamente en Firebase por seguridad (igual a Flutter)
+      // Código erróneo. Cerramos sesión inmediatamente en Firebase por seguridad
       setShowOtpModal(false);
       setLoading(true);
       try {
@@ -150,7 +122,7 @@ export default function Login() {
         console.error(err);
       } finally {
         setLoading(false);
-        setErrorMsg('Autenticación Fallida. El código OTP ingresado es incorrecto o cancelado.');
+        setErrorMsg('Acceso Denegado. El código de seguridad ingresado es incorrecto.');
       }
     }
   };
@@ -324,28 +296,22 @@ export default function Login() {
               </div>
               
               <h3 className="text-xl font-bold text-white tracking-wider">
-                VERIFICACIÓN OTP
+                VERIFICACIÓN DE SEGURIDAD
               </h3>
               
               <p className="text-xs text-slate-400 leading-relaxed">
-                Se ha detectado acceso de **Administrador**. Ingresa el código de 6 dígitos enviado por consola para autorizar el acceso.
+                Se ha detectado acceso con privilegios de **Administrador**. Ingresa tu código maestro de seguridad para autorizar el ingreso al panel.
               </p>
 
-              {/* Banner visual con el código OTP simulado */}
-              <div className="py-3 px-4 rounded-xl bg-purple-500/10 border border-purple-500/30 my-4 text-center">
-                <p className="text-xs text-purple-300 uppercase tracking-widest font-bold">Código OTP Simulador</p>
-                <p className="text-2xl font-mono font-extrabold text-white tracking-widest mt-1">{generatedOtp}</p>
-              </div>
-
               {/* Formulario OTP */}
-              <form onSubmit={handleVerifyOtp} className="space-y-4 text-left">
+              <form onSubmit={handleVerifyOtp} className="space-y-4 text-left pt-2">
                 <div className="space-y-2">
                   <input
-                    type="text"
+                    type="password"
                     maxLength={6}
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Escribe el código aquí"
+                    placeholder="Código de 6 dígitos"
                     className="w-full text-center py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xl tracking-widest focus:outline-none focus:border-purple-500 transition-all placeholder:text-slate-700 placeholder:text-sm placeholder:font-sans"
                   />
                 </div>
@@ -361,22 +327,13 @@ export default function Login() {
                     Confirmar Código
                   </Button>
                   
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      className="inline-flex items-center text-slate-400 hover:text-purple-400 transition-colors focus:outline-none cursor-pointer"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Reenviar código
-                    </button>
-                    
+                  <div className="flex items-center justify-center text-xs pt-1">
                     <button
                       type="button"
                       onClick={handleCancelOtp}
                       className="text-red-400 hover:text-red-300 transition-colors focus:outline-none cursor-pointer"
                     >
-                      Cancelar Acceso
+                      Cancelar y Salir
                     </button>
                   </div>
                 </div>
